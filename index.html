@@ -15,6 +15,7 @@
       --card: #181818;
       --border: #2a2a2a;
       --accent: #ff3c5a;
+      --accent2: #ff9a00;
       --text: #f0f0f0;
       --muted: #777;
       --grad: linear-gradient(135deg, #ff3c5a 0%, #ff9a00 60%, #ffde59 100%);
@@ -25,11 +26,9 @@
     /* NAV */
     nav {
       position: sticky; top: 0; z-index: 100;
-      background: rgba(10,10,10,0.88);
-      backdrop-filter: blur(20px);
+      background: rgba(10,10,10,0.88); backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
-      height: 58px;
-      display: flex; align-items: center;
+      height: 58px; display: flex; align-items: center;
       padding: 0 20px; gap: 12px;
     }
     .logo {
@@ -50,7 +49,7 @@
     }
     .upload-btn:hover { opacity: .82; transform: scale(1.04); }
 
-    /* MODAL */
+    /* UPLOAD MODAL */
     .overlay {
       display: none; position: fixed; inset: 0; z-index: 200;
       background: rgba(0,0,0,0.88); backdrop-filter: blur(10px);
@@ -65,7 +64,7 @@
     }
     @keyframes popIn {
       from { opacity:0; transform:scale(.82) translateY(20px); }
-      to   { opacity:1; transform:scale(1)  translateY(0); }
+      to   { opacity:1; transform:scale(1) translateY(0); }
     }
     .modal-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; }
 
@@ -94,6 +93,18 @@
     .field input:focus, .field textarea:focus { border-color: var(--accent); }
     .field textarea { resize:vertical; min-height:68px; }
 
+    .uploading-bar {
+      display:none; align-items:center; justify-content:center;
+      gap:10px; padding:12px; color:var(--muted); font-size:.88rem;
+    }
+    .uploading-bar.show { display:flex; }
+    .spinner {
+      width:18px; height:18px; border:2px solid var(--border);
+      border-top-color:var(--accent); border-radius:50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
     .modal-actions { display:flex; gap:10px; margin-top:18px; }
     .btn-cancel {
       flex:1; padding:11px; border-radius:10px;
@@ -101,7 +112,7 @@
       color:var(--text); cursor:pointer; font-family:'DM Sans',sans-serif;
       font-size:.88rem; transition:background .18s;
     }
-    .btn-cancel:hover { background: var(--border); }
+    .btn-cancel:hover { background:var(--border); }
     .btn-post {
       flex:2; padding:11px; border-radius:10px;
       background:var(--grad); border:none; color:#000;
@@ -111,18 +122,107 @@
     .btn-post:hover { opacity:.84; }
     .btn-post:disabled { opacity:.4; cursor:not-allowed; }
 
-    /* UPLOADING SPINNER */
-    .uploading-bar {
-      display: none; align-items: center; justify-content: center;
-      gap: 10px; padding: 12px; color: var(--muted); font-size: .88rem;
+    /* COMMENTS PANEL */
+    .comments-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.88); backdrop-filter: blur(10px);
+      align-items: flex-end; justify-content: center; padding: 0;
     }
-    .uploading-bar.show { display: flex; }
-    .spinner {
-      width: 18px; height: 18px; border: 2px solid var(--border);
-      border-top-color: var(--accent); border-radius: 50%;
-      animation: spin .7s linear infinite;
+    .comments-overlay.open { display: flex; }
+
+    .comments-panel {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 22px 22px 0 0;
+      width: 100%; max-width: 500px;
+      height: 70vh; display: flex; flex-direction: column;
+      animation: slideUp .3s cubic-bezier(.34,1.2,.64,1);
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    .comments-header {
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .comments-header h3 { font-size: .95rem; font-weight: 600; }
+    .comments-close {
+      background: none; border: none; color: var(--muted);
+      font-size: 1.3rem; cursor: pointer; line-height: 1;
+      padding: 4px; border-radius: 8px; transition: background .15s;
+    }
+    .comments-close:hover { background: var(--border); }
+
+    .comments-list {
+      flex: 1; overflow-y: auto; padding: 14px 18px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .comments-list::-webkit-scrollbar { width: 4px; }
+    .comments-list::-webkit-scrollbar-track { background: transparent; }
+    .comments-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .comment-item {
+      display: flex; gap: 10px; align-items: flex-start;
+      animation: fadeUp .25s ease;
+    }
+    .comment-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--grad);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: .75rem; color: #000;
+      flex-shrink: 0;
+    }
+    .comment-body { flex: 1; min-width: 0; }
+    .comment-user { font-weight: 600; font-size: .82rem; margin-bottom: 2px; }
+    .comment-text { font-size: .88rem; color: #ccc; line-height: 1.45; word-break: break-word; }
+    .comment-time { font-size: .7rem; color: var(--muted); margin-top: 3px; }
+    .comment-delete {
+      background: none; border: none; color: #555;
+      cursor: pointer; font-size: .75rem; padding: 2px 6px;
+      border-radius: 6px; transition: color .15s, background .15s;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .comment-delete:hover { color: #ff5555; background: rgba(255,85,85,.1); }
+
+    .no-comments { text-align: center; padding: 40px 20px; color: var(--muted); }
+    .no-comments .nc-icon { font-size: 2.2rem; margin-bottom: 10px; }
+    .no-comments p { font-size: .88rem; }
+
+    .comments-input-area {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex; gap: 10px; align-items: flex-end;
+      flex-shrink: 0;
+      background: var(--card);
+    }
+    .comment-user-input {
+      width: 90px; flex-shrink: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 9px 10px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: .82rem;
+      outline: none; transition: border-color .2s;
+    }
+    .comment-user-input:focus { border-color: var(--accent); }
+    .comment-text-input {
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 9px 12px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: .88rem;
+      outline: none; transition: border-color .2s; resize: none;
+      min-height: 38px; max-height: 100px; overflow-y: auto;
+      line-height: 1.4;
+    }
+    .comment-text-input:focus { border-color: var(--accent); }
+    .comment-send {
+      background: var(--grad); border: none; border-radius: 10px;
+      width: 38px; height: 38px; cursor: pointer; flex-shrink: 0;
+      font-size: 1rem; transition: opacity .15s, transform .1s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .comment-send:hover { opacity: .82; transform: scale(1.06); }
+    .comment-send:disabled { opacity: .3; cursor: not-allowed; }
 
     /* FEED */
     .feed { max-width: 500px; margin: 28px auto; padding: 0 14px; display: flex; flex-direction: column; gap: 22px; }
@@ -140,10 +240,9 @@
     .card-head { padding:13px 15px; display:flex; align-items:center; gap:10px; }
     .avatar {
       width:38px; height:38px; border-radius:50%;
-      background: var(--grad);
+      background:var(--grad);
       display:flex; align-items:center; justify-content:center;
-      font-weight:800; font-size:.92rem; color:#000;
-      flex-shrink:0; user-select:none;
+      font-weight:800; font-size:.92rem; color:#000; flex-shrink:0;
     }
     .card-info { flex:1; min-width:0; }
     .card-user { font-weight:600; font-size:.9rem; }
@@ -155,7 +254,7 @@
       font-size:1.3rem; cursor:pointer; padding:4px 8px;
       border-radius:8px; transition:background .15s; line-height:1;
     }
-    .menu-trigger:hover { background: var(--border); }
+    .menu-trigger:hover { background:var(--border); }
     .dropdown {
       display:none; position:absolute; right:0; top:34px;
       background:#202020; border:1px solid var(--border);
@@ -169,12 +268,15 @@
       cursor:pointer; font-family:'DM Sans',sans-serif;
       font-size:.84rem; text-align:left; transition:background .15s;
     }
-    .dropdown button:hover { background: rgba(255,85,85,.1); }
+    .dropdown button:hover { background:rgba(255,85,85,.1); }
 
     .card-img { width:100%; aspect-ratio:1/1; object-fit:cover; display:block; background:#000; }
 
-    .card-actions { padding:11px 15px; display:flex; align-items:center; }
-    .like-btn {
+    .card-actions {
+      padding: 10px 15px 8px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .like-btn, .comment-btn {
       background:none; border:none; cursor:pointer;
       display:flex; align-items:center; gap:6px;
       color:var(--text); font-family:'DM Sans',sans-serif;
@@ -182,18 +284,35 @@
       transition:background .15s, transform .15s;
     }
     .like-btn:hover { background:rgba(255,60,90,.1); transform:scale(1.08); }
+    .comment-btn:hover { background:rgba(255,154,0,.1); transform:scale(1.08); }
     .like-btn .heart { font-size:1.25rem; }
     .like-btn.liked .heart { animation: heartPop .25s ease; }
     @keyframes heartPop { 0%{transform:scale(1)} 50%{transform:scale(1.35)} 100%{transform:scale(1)} }
-    .like-count { font-weight:600; min-width:14px; }
+    .like-count, .comment-count { font-weight:600; min-width:14px; }
+    .comment-btn .bubble { font-size: 1.2rem; }
 
-    .card-caption { padding:0 15px 15px; font-size:.88rem; line-height:1.55; color:#ccc; }
+    .card-caption { padding:0 15px 6px; font-size:.88rem; line-height:1.55; color:#ccc; }
     .card-caption strong { color:var(--text); margin-right:6px; font-weight:600; }
+
+    /* PREVIEW COMMENTS BELOW CARD */
+    .card-comments-preview {
+      padding: 0 15px 14px;
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .preview-comment { font-size: .85rem; color: #bbb; line-height: 1.4; }
+    .preview-comment strong { color: var(--text); font-weight: 600; margin-right: 5px; }
+    .view-all-comments {
+      background: none; border: none; color: var(--muted);
+      font-size: .8rem; cursor: pointer; padding: 0;
+      font-family: 'DM Sans', sans-serif; text-align: left;
+      transition: color .15s; margin-top: 2px;
+    }
+    .view-all-comments:hover { color: var(--text); }
 
     /* SKELETON */
     .skeleton-card { background:var(--card); border:1px solid var(--border); border-radius:18px; overflow:hidden; }
-    .skel { background: linear-gradient(90deg, #1a1a1a 25%, #252525 50%, #1a1a1a 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; }
-    @keyframes shimmer { to { background-position: -200% 0; } }
+    .skel { background:linear-gradient(90deg,#1a1a1a 25%,#252525 50%,#1a1a1a 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; }
+    @keyframes shimmer { to{background-position:-200% 0;} }
     .skel-head { height:64px; margin:13px 15px; border-radius:10px; }
     .skel-img { width:100%; aspect-ratio:1/1; }
     .skel-foot { height:40px; margin:11px 15px; border-radius:10px; }
@@ -211,7 +330,7 @@
       border-radius:30px; padding:10px 22px;
       font-size:.85rem; color:var(--text);
       box-shadow:0 8px 30px rgba(0,0,0,.4);
-      transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+      transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;
       opacity:0; pointer-events:none; z-index:300; white-space:nowrap;
     }
     .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
@@ -225,8 +344,8 @@
   <button class="upload-btn" onclick="openModal()">+ Post Meme</button>
 </nav>
 
-<!-- MODAL -->
-<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+<!-- UPLOAD MODAL -->
+<div class="overlay" id="upload-overlay" onclick="handleUploadOverlayClick(event)">
   <div class="modal">
     <div class="modal-title">🔥 Drop a Meme</div>
     <div class="drop-zone" id="dropZone">
@@ -254,14 +373,26 @@
   </div>
 </div>
 
+<!-- COMMENTS PANEL -->
+<div class="comments-overlay" id="comments-overlay" onclick="handleCommentsOverlayClick(event)">
+  <div class="comments-panel">
+    <div class="comments-header">
+      <h3>💬 Comments <span id="comments-panel-count" style="color:var(--muted);font-weight:400;font-size:.82rem;"></span></h3>
+      <button class="comments-close" onclick="closeComments()">✕</button>
+    </div>
+    <div class="comments-list" id="comments-list"></div>
+    <div class="comments-input-area">
+      <input class="comment-user-input" id="comment-username" placeholder="name" maxlength="30"/>
+      <textarea class="comment-text-input" id="comment-text" placeholder="Write a comment..." maxlength="300" rows="1" onkeydown="handleCommentKey(event)"></textarea>
+      <button class="comment-send" id="comment-send-btn" onclick="submitComment()">➤</button>
+    </div>
+  </div>
+</div>
+
 <div class="feed" id="feed">
-  <!-- skeletons while loading -->
-  ${[1,2,3].map(() => `
-  <div class="skeleton-card">
-    <div class="skel skel-head"></div>
-    <div class="skel skel-img"></div>
-    <div class="skel skel-foot"></div>
-  </div>`).join('')}
+  <div class="skeleton-card"><div class="skel skel-head"></div><div class="skel skel-img"></div><div class="skel skel-foot"></div></div>
+  <div class="skeleton-card"><div class="skel skel-head"></div><div class="skel skel-img"></div><div class="skel skel-foot"></div></div>
+  <div class="skeleton-card"><div class="skel skel-head"></div><div class="skel skel-img"></div><div class="skel skel-foot"></div></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -272,15 +403,18 @@
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let selectedFile = null;
+  let activeMemeId = null;
+  let allMemes = [];
 
   // ── LOAD FEED ──
   async function loadMemes() {
     const { data, error } = await sb
       .from('memes')
-      .select('*')
+      .select('*, comments(count)')
       .order('created_at', { ascending: false });
 
-    if (error) { showToast('⚠️ Failed to load memes'); console.error(error); return; }
+    if (error) { showToast('⚠️ Failed to load memes'); return; }
+    allMemes = data;
     renderFeed(data);
   }
 
@@ -293,7 +427,9 @@
       return;
     }
 
-    feed.innerHTML = memes.map((m, i) => `
+    feed.innerHTML = memes.map((m, i) => {
+      const commentCount = m.comments?.[0]?.count ?? 0;
+      return `
       <div class="card" style="animation-delay:${i * 0.06}s" id="card-${m.id}">
         <div class="card-head">
           <div class="avatar">${escHtml(m.username.charAt(0).toUpperCase())}</div>
@@ -314,10 +450,131 @@
             <span class="heart">${m.user_liked ? '❤️' : '🤍'}</span>
             <span class="like-count" id="lc-${m.id}">${m.likes}</span>
           </button>
+          <button class="comment-btn" onclick="openComments('${m.id}')">
+            <span class="bubble">💬</span>
+            <span class="comment-count" id="cc-${m.id}">${commentCount}</span>
+          </button>
         </div>
         ${m.caption ? `<div class="card-caption"><strong>${escHtml(m.username)}</strong>${escHtml(m.caption)}</div>` : ''}
+        <div class="card-comments-preview" id="preview-${m.id}"></div>
+      </div>`;
+    }).join('');
+
+    // load 2 preview comments per card
+    memes.forEach(m => loadPreviewComments(m.id));
+  }
+
+  async function loadPreviewComments(memeId) {
+    const { data } = await sb
+      .from('comments')
+      .select('*')
+      .eq('meme_id', memeId)
+      .order('created_at', { ascending: false })
+      .limit(2);
+
+    const container = document.getElementById('preview-' + memeId);
+    if (!container || !data || !data.length) return;
+
+    const total = parseInt(document.getElementById('cc-' + memeId)?.textContent || '0');
+    container.innerHTML = data.reverse().map(c => `
+      <div class="preview-comment">
+        <strong>${escHtml(c.username)}</strong>${escHtml(c.content)}
+      </div>
+    `).join('') + (total > 2 ? `<button class="view-all-comments" onclick="openComments('${memeId}')">View all ${total} comments</button>` : '');
+  }
+
+  // ── COMMENTS PANEL ──
+  async function openComments(memeId) {
+    activeMemeId = memeId;
+    document.getElementById('comments-overlay').classList.add('open');
+    document.getElementById('comments-list').innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:30px;color:var(--muted);font-size:.88rem;">
+        <div class="spinner"></div> Loading comments...
+      </div>`;
+    await loadComments(memeId);
+  }
+
+  function closeComments() {
+    document.getElementById('comments-overlay').classList.remove('open');
+    activeMemeId = null;
+  }
+
+  function handleCommentsOverlayClick(e) {
+    if (e.target === document.getElementById('comments-overlay')) closeComments();
+  }
+
+  async function loadComments(memeId) {
+    const { data, error } = await sb
+      .from('comments')
+      .select('*')
+      .eq('meme_id', memeId)
+      .order('created_at', { ascending: true });
+
+    if (error) { showToast('⚠️ Failed to load comments'); return; }
+
+    const list = document.getElementById('comments-list');
+    document.getElementById('comments-panel-count').textContent = data.length ? `(${data.length})` : '';
+
+    if (!data.length) {
+      list.innerHTML = `<div class="no-comments"><div class="nc-icon">💬</div><p>No comments yet.<br/>Be the first to say something!</p></div>`;
+      return;
+    }
+
+    list.innerHTML = data.map(c => `
+      <div class="comment-item" id="comment-${c.id}">
+        <div class="comment-avatar">${escHtml(c.username.charAt(0).toUpperCase())}</div>
+        <div class="comment-body">
+          <div class="comment-user">${escHtml(c.username)}</div>
+          <div class="comment-text">${escHtml(c.content)}</div>
+          <div class="comment-time">${timeAgo(c.created_at)}</div>
+        </div>
+        <button class="comment-delete" onclick="deleteComment('${c.id}', '${memeId}')" title="Delete">✕</button>
       </div>
     `).join('');
+
+    // scroll to bottom
+    list.scrollTop = list.scrollHeight;
+  }
+
+  async function submitComment() {
+    if (!activeMemeId) return;
+    const username = (document.getElementById('comment-username').value.trim() || 'Anonymous');
+    const content  = document.getElementById('comment-text').value.trim();
+    if (!content) return;
+
+    const btn = document.getElementById('comment-send-btn');
+    btn.disabled = true;
+
+    const { error } = await sb.from('comments').insert({ meme_id: activeMemeId, username, content });
+
+    btn.disabled = false;
+
+    if (error) { showToast('⚠️ Failed to post comment'); return; }
+
+    document.getElementById('comment-text').value = '';
+
+    // update comment count on card
+    const ccEl = document.getElementById('cc-' + activeMemeId);
+    if (ccEl) ccEl.textContent = parseInt(ccEl.textContent || '0') + 1;
+
+    await loadComments(activeMemeId);
+    await loadPreviewComments(activeMemeId);
+  }
+
+  function handleCommentKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(); }
+  }
+
+  async function deleteComment(commentId, memeId) {
+    await sb.from('comments').delete().eq('id', commentId);
+
+    const ccEl = document.getElementById('cc-' + memeId);
+    if (ccEl) ccEl.textContent = Math.max(0, parseInt(ccEl.textContent || '1') - 1);
+
+    const el = document.getElementById('comment-' + commentId);
+    if (el) { el.style.opacity = '0'; el.style.transform = 'scale(.9)'; el.style.transition = '.2s'; }
+    setTimeout(() => loadComments(memeId), 220);
+    loadPreviewComments(memeId);
   }
 
   // ── POST MEME ──
@@ -325,35 +582,18 @@
     if (!selectedFile) return;
     const username = (document.getElementById('input-user').value.trim() || 'Anonymous');
     const caption  = document.getElementById('input-caption').value.trim();
-
     setUploading(true);
 
-    // 1. Upload image to Supabase Storage
-    const ext = selectedFile.name.split('.').pop();
+    const ext  = selectedFile.name.split('.').pop();
     const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    const { error: uploadError } = await sb.storage
-      .from('memes')
-      .upload(path, selectedFile, { contentType: selectedFile.type });
+    const { error: uploadError } = await sb.storage.from('memes').upload(path, selectedFile, { contentType: selectedFile.type });
+    if (uploadError) { setUploading(false); showToast('⚠️ Upload failed: ' + uploadError.message); return; }
 
-    if (uploadError) {
-      setUploading(false);
-      showToast('⚠️ Upload failed: ' + uploadError.message);
-      return;
-    }
-
-    // 2. Get public URL
     const { data: urlData } = sb.storage.from('memes').getPublicUrl(path);
-    const image_url = urlData.publicUrl;
+    const { error: dbError } = await sb.from('memes').insert({ username, caption, image_url: urlData.publicUrl, likes: 0 });
 
-    // 3. Save record to DB
-    const { error: dbError } = await sb.from('memes').insert({ username, caption, image_url, likes: 0 });
-
-    if (dbError) {
-      setUploading(false);
-      showToast('⚠️ Failed to save meme');
-      return;
-    }
+    if (dbError) { setUploading(false); showToast('⚠️ Failed to save meme'); return; }
 
     setUploading(false);
     closeModal();
@@ -366,31 +606,24 @@
     const btn = document.getElementById('like-' + id);
     const isLiked = btn.classList.contains('liked');
     const newLikes = isLiked ? currentLikes - 1 : currentLikes + 1;
-
-    // Optimistic UI
     btn.querySelector('.heart').textContent = isLiked ? '🤍' : '❤️';
     document.getElementById('lc-' + id).textContent = newLikes;
     isLiked ? btn.classList.remove('liked') : btn.classList.add('liked');
-
     await sb.from('memes').update({ likes: newLikes }).eq('id', id);
   }
 
-  // ── DELETE ──
+  // ── DELETE MEME ──
   async function deleteMeme(id, imageUrl) {
-    // Remove from DB
     await sb.from('memes').delete().eq('id', id);
-
-    // Remove from Storage
     const path = imageUrl.split('/memes/')[1];
     if (path) await sb.storage.from('memes').remove([path]);
-
     const card = document.getElementById('card-' + id);
-    if (card) { card.style.opacity = '0'; card.style.transform = 'scale(.9)'; card.style.transition = '.25s'; }
+    if (card) { card.style.opacity='0'; card.style.transform='scale(.9)'; card.style.transition='.25s'; }
     setTimeout(loadMemes, 260);
     showToast('Meme deleted');
   }
 
-  // ── HELPERS ──
+  // ── UPLOAD MODAL HELPERS ──
   function setUploading(on) {
     document.getElementById('uploading-bar').classList.toggle('show', on);
     document.getElementById('post-btn').disabled = on;
@@ -413,9 +646,9 @@
     reader.readAsDataURL(file);
   }
 
-  function openModal() { document.getElementById('overlay').classList.add('open'); resetModal(); }
-  function closeModal() { document.getElementById('overlay').classList.remove('open'); }
-  function handleOverlayClick(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
+  function openModal() { document.getElementById('upload-overlay').classList.add('open'); resetModal(); }
+  function closeModal() { document.getElementById('upload-overlay').classList.remove('open'); }
+  function handleUploadOverlayClick(e) { if (e.target === document.getElementById('upload-overlay')) closeModal(); }
 
   function resetModal() {
     selectedFile = null;
@@ -429,7 +662,6 @@
     document.getElementById('post-btn').disabled = true;
   }
 
-  // Drag & drop
   const dz = document.getElementById('dropZone');
   dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
   dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
@@ -471,7 +703,6 @@
     toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
   }
 
-  // ── INIT ──
   loadMemes();
 </script>
 </body>
